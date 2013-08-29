@@ -49,34 +49,42 @@ final class MODE{
 */
 
 class FileIO{
-	private $fileName;
-	private $file;
+	private $requestName;
+	private $handle;
 	private	$fileSize;
-	private $fileContent;
+	private $content;
+	private $url;
 	
 	
 	/**
 	 * Opens the file with what ever mode is given.
 	 * 
-	 * $fileName is the filename starting with the folder location. Ie "/FileIOLib/test.txt"
+	 * $requestName is the request starting with the folder location. Ie "/FileIOLib/test.txt"
 	 * $mode the mode that we want the file to be opened.
+	 * $url if this is for a url or file
 	 * 
 	 * @return nothing if everything works
 	 * @return echos error and dies
 	 * 
 	 */
-	public function init($fileName,$mode){
-		$this->fileName = $fileName;
-		
-		$this->file = fopen($this->fileName,$mode);
-		if($this->file == false){
-			echo "error opening file";
+	public function init($requestName,$mode,$url){
+		$this->requestName = $requestName;
+		$this->url = $url;
+		$this->handle = fopen($this->requestName,$mode);
+		if($this->handle == false){
+			echo "error opening request";
 			die;
 		}
-		$this->clearCache();
-		$this->fileSize = filesize($this->fileName);
-		
-		$this->fileContent = fread($this->file,$this->fileSize);
+		if($this->url == false){
+			$this->clearCache();
+			$this->fileSize = filesize($this->requestName);
+			
+			if($this->fileSize != 0){
+				$this->content = fread($this->handle,$this->fileSize);
+			}
+		} else{
+			$this->content = stream_get_contents($this->handle);	
+		}
 	}
 	
 	/**
@@ -86,10 +94,10 @@ class FileIO{
 	 * @return echos on error
 	 */
 	public function read(){
-		rewind($this->file);
-		if($this->file){
-			$this->fileContent = fread($this->file,$this->fileSize);
-			if($this->fileContent == false)
+		rewind($this->handle);
+		if($this->handle){
+			$this->content = fread($this->handle,$this->fileSize);
+			if($this->content == false)
 			{
 				echo "Error Reading File";
 			}
@@ -107,10 +115,10 @@ class FileIO{
 	 * @return the number of bytes written
 	 */
 	public function write($content){
-		if($this->file){
-			$written = fwrite($this->file,$content);
+		if($this->handle){
+			$written = fwrite($this->handle,$content);
 			$this->clearCache();
-			$this->fileSize = filesize($this->fileName);
+			$this->fileSize = filesize($this->requestName);
 			return $written;
 		}
 	}
@@ -119,14 +127,14 @@ class FileIO{
 	 * Closes the file handle
 	 */
 	public function close(){
-		fclose($this->file);
+		fclose($this->handle);
 	}
 	
 	/**
 	 * Returns $fileContent
 	 */
 	public function getContent(){
-		return $this->fileContent;
+		return $this->content;
 	}
 	/**
 	 * Returns $fileSize
@@ -134,6 +142,20 @@ class FileIO{
 	public function getFileSize(){
 		return $this->fileSize;
 	}
+	/**
+	 * Returns the position of the file pointer
+	 */
+	 public function getPointer(){
+		 ftell($this->handle);
+	 }
+	 /**
+	 * Sets the position of the file pointer
+	 * Returns 0 upon success -1 otherwise
+	 */
+	 public function setPointer($offset){
+		 fseek($this->handle,$offset);
+	 }
+	
 	
 	private function clearCache(){
 		clearstatcache();
