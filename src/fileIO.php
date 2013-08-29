@@ -66,7 +66,7 @@ class FileIO{
 	 * 
 	 */
 	public function init($fileName,$mode){
-		$this->fileName = $_SERVER['DOCUMENT_ROOT'].$fileName;
+		$this->fileName = $fileName;
 		
 		$this->file = fopen($this->fileName,$mode);
 		if($this->file == false){
